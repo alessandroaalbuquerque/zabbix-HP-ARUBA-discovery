@@ -1,0 +1,266 @@
+zabbix_export:
+  version: '6.4'
+  host_groups:
+    - uuid: a024e71a8e08422a8db6c4748f1a2c2e
+      name: Aruba
+  hosts:
+    - host: Airwave
+      name: Airwave
+      status: DISABLED
+      groups:
+        - name: Aruba
+      items:
+        - name: Token
+          type: HTTP_AGENT
+          key: api_token_aruba
+          delay: '0;1m/1-7,00:00-00:01'
+          trends: '0'
+          status: DISABLED
+          value_type: TEXT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $._global_result.UIDARUBA
+          url: '{$URL_ARUBA_API}/v1/api/login'
+          posts: 'username=priaxtjrs&password=priaxtjrs@2022'
+          headers:
+            - name: Content-Type
+              value: application/json
+          request_method: POST
+        - name: 'TESTE - [AGO-2A-AP02] Tx Download'
+          type: HTTP_AGENT
+          key: teste-airwave-get-list-aps-tx_download-AGO-2A-AP02
+          delay: 5m
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.["RADIO Stats"][21].Value'
+          url: '{$URL_API_ARUBA_MOBILITY_CONTROLLERS}/v1/configuration/showcommand'
+          query_fields:
+            - name: command
+              value: 'show ap debug radio-stats ap-name AGO-2A-AP02 radio 0'
+            - name: UIDARUBA
+              value: '{$TOKEN_ARUBA_MOBILITY_CONTROLLERS}'
+          follow_redirects: 'NO'
+          headers:
+            - name: Content-Type
+              value: application/json
+            - name: Cookie
+              value: 'SESSION={$TOKEN_ARUBA_MOBILITY_CONTROLLERS}'
+      discovery_rules:
+        - name: 'GET List APs  - REST API Mobility Master and Mobility Crontroller VIP'
+          type: HTTP_AGENT
+          key: airwave-get-list-aps-mobility-master
+          delay: '0;1m/1-7,00:00-00:01'
+          status: DISABLED
+          item_prototypes:
+            - name: '[{{#NAME_AP}.regsub("\[\"(.*)\"\]", \1)}] Controller Active'
+              type: HTTP_AGENT
+              key: 'airwave-get-list-aps-controller_active-[{#NAME_AP}]'
+              delay: '0;1m/1-7,00:04-00:05'
+              trends: '0'
+              status: DISABLED
+              discover: NO_DISCOVER
+              value_type: TEXT
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.Name == ''{{#NAME_AP}.regsub("\[\"(.*)\"\]", \1)}'')].["Switch IP"]'
+              url: '{$URL_API_ARUBA_MOBILITY_MASTER}/v1/configuration/showcommand'
+              query_fields:
+                - name: command
+                  value: 'show ap database long'
+                - name: UIDARUBA
+                  value: '{$TOKEN_ARUBA_MOBILITY_MASTER}'
+              headers:
+                - name: Content-Type
+                  value: application/json
+                - name: Cookie
+                  value: 'SESSION={$TOKEN_ARUBA_MOBILITY_MASTER}'
+            - name: '[{{#NAME_AP}.regsub("\[\"(.*)\"\]", \1)}] Controller Standby'
+              type: HTTP_AGENT
+              key: 'airwave-get-list-aps-controller_standby-[{#NAME_AP}]'
+              delay: '0;1m/1-7,00:04-00:05'
+              trends: '0'
+              status: DISABLED
+              discover: NO_DISCOVER
+              value_type: TEXT
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.Name == ''{{#NAME_AP}.regsub("\[\"(.*)\"\]", \1)}'')].["Standby IP"]'
+              url: '{$URL_API_ARUBA_MOBILITY_MASTER}/v1/configuration/showcommand'
+              query_fields:
+                - name: command
+                  value: 'show ap database long'
+                - name: UIDARUBA
+                  value: '{$TOKEN_ARUBA_MOBILITY_MASTER}'
+              headers:
+                - name: Content-Type
+                  value: application/json
+                - name: Cookie
+                  value: 'SESSION={$TOKEN_ARUBA_MOBILITY_MASTER}'
+            - name: '[{{#NAME_AP}.regsub("\[\"(.*)\"\]", \1)}] Group'
+              type: HTTP_AGENT
+              key: 'airwave-get-list-aps-group-[{#NAME_AP}]'
+              delay: '0;1m/1-7,00:04-00:05'
+              trends: '0'
+              status: DISABLED
+              discover: NO_DISCOVER
+              value_type: TEXT
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.Name == ''{{#NAME_AP}.regsub("\[\"(.*)\"\]", \1)}'')].Group'
+              url: '{$URL_API_ARUBA_MOBILITY_MASTER}/v1/configuration/showcommand'
+              query_fields:
+                - name: command
+                  value: 'show ap database long'
+                - name: UIDARUBA
+                  value: '{$TOKEN_ARUBA_MOBILITY_MASTER}'
+              headers:
+                - name: Content-Type
+                  value: application/json
+                - name: Cookie
+                  value: 'SESSION={$TOKEN_ARUBA_MOBILITY_MASTER}'
+            - name: '[{{#NAME_AP}.regsub("\[\"(.*)\"\]", \1)}] IP'
+              type: HTTP_AGENT
+              key: 'airwave-get-list-aps-ip-[{#NAME_AP}]'
+              delay: '0;1m/1-7,00:04-00:05'
+              trends: '0'
+              status: DISABLED
+              discover: NO_DISCOVER
+              value_type: TEXT
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.Name == ''{{#NAME_AP}.regsub("\[\"(.*)\"\]", \1)}'')].["IP Address"]'
+              url: '{$URL_API_ARUBA_MOBILITY_MASTER}/v1/configuration/showcommand'
+              query_fields:
+                - name: command
+                  value: 'show ap database long'
+                - name: UIDARUBA
+                  value: '{$TOKEN_ARUBA_MOBILITY_MASTER}'
+              headers:
+                - name: Content-Type
+                  value: application/json
+                - name: Cookie
+                  value: 'SESSION={$TOKEN_ARUBA_MOBILITY_MASTER}'
+            - name: '[{{#NAME_AP}.regsub("\[\"(.*)\"\]", \1)}] Serial'
+              type: HTTP_AGENT
+              key: 'airwave-get-list-aps-serial-[{#NAME_AP}]'
+              delay: '0;1m/1-7,00:04-00:05'
+              trends: '0'
+              status: DISABLED
+              discover: NO_DISCOVER
+              value_type: TEXT
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.Name == ''{{#NAME_AP}.regsub("\[\"(.*)\"\]", \1)}'')].["Serial #"]'
+              url: '{$URL_API_ARUBA_MOBILITY_MASTER}/v1/configuration/showcommand'
+              query_fields:
+                - name: command
+                  value: 'show ap database long'
+                - name: UIDARUBA
+                  value: '{$TOKEN_ARUBA_MOBILITY_MASTER}'
+              headers:
+                - name: Content-Type
+                  value: application/json
+                - name: Cookie
+                  value: 'SESSION={$TOKEN_ARUBA_MOBILITY_MASTER}'
+            - name: '[{{#NAME_AP}.regsub("\[\"(.*)\"\]", \1)}] Tx Download'
+              type: HTTP_AGENT
+              key: 'airwave-get-list-aps-tx_download-[{#NAME_AP}]'
+              delay: 10m
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$.["RADIO Stats"][21].Value'
+              url: '{$URL_API_ARUBA_MOBILITY_CONTROLLERS}/v1/configuration/showcommand'
+              query_fields:
+                - name: command
+                  value: 'show ap debug radio-stats ap-name {{#NAME_AP}.regsub("\[\"(.*)\"\]", \1)} radio 0'
+                - name: UIDARUBA
+                  value: '{$TOKEN_ARUBA_MOBILITY_CONTROLLERS}'
+              headers:
+                - name: Content-Type
+                  value: application/json
+                - name: Cookie
+                  value: 'SESSION={$TOKEN_ARUBA_MOBILITY_CONTROLLERS}'
+            - name: '[{{#NAME_AP}.regsub("\[\"(.*)\"\]", \1)}] Tx Upload'
+              type: HTTP_AGENT
+              key: 'airwave-get-list-aps-tx_upload-[{#NAME_AP}]'
+              delay: 10m
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$.["RADIO Stats"][22].Value'
+              url: '{$URL_API_ARUBA_MOBILITY_CONTROLLERS}/v1/configuration/showcommand'
+              query_fields:
+                - name: command
+                  value: 'show ap debug radio-stats ap-name {{#NAME_AP}.regsub("\[\"(.*)\"\]", \1)} radio 0'
+                - name: UIDARUBA
+                  value: '{$TOKEN_ARUBA_MOBILITY_CONTROLLERS}'
+              headers:
+                - name: Content-Type
+                  value: application/json
+                - name: Cookie
+                  value: 'SESSION={$TOKEN_ARUBA_MOBILITY_CONTROLLERS}'
+            - name: '[{{#NAME_AP}.regsub("\[\"(.*)\"\]", \1)}] Uptime'
+              type: HTTP_AGENT
+              key: 'airwave-get-list-aps-uptime-[{#NAME_AP}]'
+              delay: '0;1m/1-7,00:04-00:05'
+              trends: '0'
+              status: DISABLED
+              discover: NO_DISCOVER
+              value_type: TEXT
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$..[?(@.Name == ''{{#NAME_AP}.regsub("\[\"(.*)\"\]", \1)}'')].Status'
+              url: '{$URL_API_ARUBA_MOBILITY_MASTER}/v1/configuration/showcommand'
+              query_fields:
+                - name: command
+                  value: 'show ap database long'
+                - name: UIDARUBA
+                  value: '{$TOKEN_ARUBA_MOBILITY_MASTER}'
+              headers:
+                - name: Content-Type
+                  value: application/json
+                - name: Cookie
+                  value: 'SESSION={$TOKEN_ARUBA_MOBILITY_MASTER}'
+          url: '{$URL_API_ARUBA_MOBILITY_MASTER}/v1/configuration/showcommand'
+          query_fields:
+            - name: command
+              value: 'show ap database long'
+            - name: UIDARUBA
+              value: '{$TOKEN_ARUBA_MOBILITY_MASTER}'
+          headers:
+            - name: Content-Type
+              value: application/json
+            - name: Cookie
+              value: 'SESSION={$TOKEN_ARUBA_MOBILITY_MASTER}'
+          lld_macro_paths:
+            - lld_macro: '{#NAME_AP}'
+              path: $..Name
+            - lld_macro: '{#UPTIME}'
+              path: $..Status
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.["AP Database"][*]'
+      macros:
+        - macro: '{$TOKEN_ARUBA_MOBILITY_CONTROLLERS}'
+          value: MWNlYzBlZmQtZWFiNC00OTYyLTgxM2ItMzcz
+          description: 'Token para uso na autenticação da console dos ARUBAs'
+        - macro: '{$TOKEN_ARUBA_MOBILITY_MASTER}'
+          value: Mzk2ODdkZjktZDMxNS00MTkxLTkzODctNjRi
+          description: 'Token para uso na autenticação da console dos ARUBAs'
+        - macro: '{$URL_API_ARUBA_MOBILITY_CONTROLLERS}'
+          value: 'https://10.202.77.20:4343'
+          description: 'Endpoint para uso do VIP dos ARUBAs MOBILITYs MASTERs APIs'
+        - macro: '{$URL_API_ARUBA_MOBILITY_MASTER}'
+          value: 'https://10.202.77.10:4343'
+          description: 'Endpoint para uso do VIP dos ARUBAs MOBILITYs CONTROLLERs APIs'
+      inventory_mode: DISABLED
