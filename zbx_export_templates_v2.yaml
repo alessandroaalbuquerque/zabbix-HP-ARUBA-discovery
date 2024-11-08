@@ -1,0 +1,127 @@
+zabbix_export:
+  version: '6.0'
+  date: '2024-11-08T01:44:16Z'
+  groups:
+    - uuid: 7df96b18c230490a9a0a9e2307226338
+      name: Templates
+  templates:
+    - uuid: 9a5a3d287e2346d1bf940d4fccf9ec02
+      template: 'HP Aruba Access Point'
+      name: 'HP Aruba Access Point'
+      groups:
+        - name: Templates
+      items:
+        - uuid: 1992223c91aa4aa0a017bcda16d655e8
+          name: 'Get List'
+          type: HTTP_AGENT
+          key: airwave-get-list-aps-mobility-master-item
+          delay: 5m
+          history: 1d
+          trends: '0'
+          value_type: TEXT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.["AP Database"][*]'
+          url: '{$URL_API_ARUBA_MOBILITY_MASTER}/v1/configuration/showcommand'
+          query_fields:
+            - name: command
+              value: 'show ap database long'
+            - name: UIDARUBA
+              value: '{$TOKEN_ARUBA_MOBILITY_MASTER}'
+          headers:
+            - name: Content-Type
+              value: application/json
+            - name: Cookie
+              value: 'SESSION={$TOKEN_ARUBA_MOBILITY_MASTER}'
+      discovery_rules:
+        - uuid: dad0f8b696f54a798784e822529a4d49
+          name: 'HP Aruba MM'
+          type: HTTP_AGENT
+          key: airwave-get-list-aps-mobility-master-discovery
+          delay: 5m
+          lifetime: 7d
+          item_prototypes:
+            - uuid: 88740a9277d24b29af7e825630d0b6ce
+              name: '[{{#NAME}.regsub("\[\"(.*)\"\]", \1)}] Status'
+              type: DEPENDENT
+              key: 'AP-[{#NAME}]'
+              delay: '0'
+              description: |
+                IP: {{#IP}.regsub("\[\"(.*)\"\]", \1)}
+                MAC: {{#MAC}.regsub("\[\"(.*)\"\]", \1)}
+                Serial: {{#SERIAL}.regsub("\[\"(.*)\"\]", \1)}
+                Status: {{#STATUS}.regsub("\[\"(.*)\"\]", \1)}
+                Group: {{#GROUP}.regsub("\[\"(.*)\"\]", \1)}
+                MC: {{#MC}.regsub("\[\"(.*)\"\]", \1)}
+                MC Standby: {{#MCSTANDBY}.regsub("\[\"(.*)\"\]", \1)}
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[?(@.Name == ''{{#NAME}.regsub("\[\"(.*)\"\]", \1)}'')].Status'
+                - type: REGEX
+                  parameters:
+                    - Up
+                    - '1'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
+              master_item:
+                key: airwave-get-list-aps-mobility-master-item
+              tags:
+                - tag: 'Grupo de Comarca'
+                  value: '{{#GROUP}.regsub("\[\"(.*)\"\]", \1)}'
+                - tag: 'Mobility Controller'
+                  value: '{{#MC}.regsub("\[\"(.*)\"\]", \1)}'
+                - tag: 'Mobility Controller Stanby'
+                  value: '{{#MCSTANDBY}.regsub("\[\"(.*)\"\]", \1)}'
+              trigger_prototypes:
+                - uuid: c2bc504096b245239fd42d6c3a562c68
+                  expression: 'last(/HP Aruba Access Point/AP-[{#NAME}])=0'
+                  name: 'AP [{{#NAME}.regsub("\[\"(.*)\"\]", \1)}] Down'
+                  priority: WARNING
+                  description: |
+                    IP: {{#IP}.regsub("\[\"(.*)\"\]", \1)}
+                    MAC: {{#MAC}.regsub("\[\"(.*)\"\]", \1)}
+                    Serial: {{#SERIAL}.regsub("\[\"(.*)\"\]", \1)}
+                    Status: {{#STATUS}.regsub("\[\"(.*)\"\]", \1)}
+                    Group: {{#GROUP}.regsub("\[\"(.*)\"\]", \1)}
+                    MC: {{#MC}.regsub("\[\"(.*)\"\]", \1)}
+                    MC Standby: {{#MCSTANDBY}.regsub("\[\"(.*)\"\]", \1)}
+          url: '{$URL_API_ARUBA_MOBILITY_MASTER}/v1/configuration/showcommand'
+          query_fields:
+            - name: command
+              value: 'show ap database long'
+            - name: UIDARUBA
+              value: '{$TOKEN_ARUBA_MOBILITY_MASTER}'
+          headers:
+            - name: Content-Type
+              value: application/json
+            - name: Cookie
+              value: 'SESSION={$TOKEN_ARUBA_MOBILITY_MASTER}'
+          lld_macro_paths:
+            - lld_macro: '{#GROUP}'
+              path: $..Group
+            - lld_macro: '{#IP}'
+              path: '$..[''IP Address'']'
+            - lld_macro: '{#MAC}'
+              path: '$..[''Wired MAC Address'']'
+            - lld_macro: '{#MCSTANDBY}'
+              path: '$..[''Standby IP'']'
+            - lld_macro: '{#MC}'
+              path: '$..[''Switch IP'']'
+            - lld_macro: '{#NAME}'
+              path: $..Name
+            - lld_macro: '{#SERIAL}'
+              path: '$..[''Serial #'']'
+            - lld_macro: '{#STATUS}'
+              path: $..Status
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - '$.["AP Database"][*]'
+      macros:
+        - macro: '{$TOKEN_ARUBA_MOBILITY_MASTER}'
+          description: 'Token para uso na autenticação da console dos ARUBAs'
+        - macro: '{$URL_API_ARUBA_MOBILITY_MASTER}'
+          value: 'https://10.202.77.10:4343'
+          description: 'Endpoint para uso do VIP dos ARUBAs MOBILITYs CONTROLLERs APIs'
